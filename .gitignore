@@ -2,3 +2,6 @@ data/
 *.csv
 *.pyc
 *.rtf
+*.numbers
+*.tsv
+.DS_Store
