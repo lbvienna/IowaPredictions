@@ -13,25 +13,19 @@ eight_order = ['Huckabee', 'McCain', 'Romney', 'Thompson', 'Paul', 'Giuliani']
 twelve_order = ['Paul', 'Romney', 'Santorum', 'Gingrich', 'Perry', 'Bachmann', 'Huntsman', 'Cain']
 sixteen_order = ['Trump', 'Cruz', 'Rubio', 'Carson', 'Bush', 'Christie', 'Paul', 'Kasich', 'Huckabee', 'Fiorina', 'Santorum']
 twelve_endorsements = np.asarray([0.97669759, 0.68541745, 0.46404455, 0.84853433])
-twelve_experience = np.asarray([2.66883193, 0.6044162, 0.15307317, 0, 0, 0.57674268])
 
-#pollster_grades = {'A+': 4.3, 'A': 4.0, 'A-': 3.7, 'B+':3.3, 'B': 3.0, 'B-': 2.7, 'C+': 2.3, 'C': 2.0, 'C-': 1.7, 'D+': 1.3, 'D': 1.0, 'D-': 0.7, 'F':0}
 pollster_grades = {'A+': 10, 'A': 9, 'A-': 8, 'B+': 7, 'B': 6, 'B-': 5, 'C+': 2, 'C': 1.5, 'C-': 1, 'D+': 0.5, 'D': 0.3, 'D-': 0.1, 'F':0}
 
 
 def main():
-	year = "2012"
+	year = "2016"
 	if year == '2016':
 		tp = 6.36636636637
-		#tp = 6.1981981982
 		alpha = 3.01101101101
-		#alpha = 3.06706706707
 		X_twelve, Y_twelve = pre_processing(year='2012', time_penalty=tp)
 		X_eight, Y_eight = pre_processing(year='2008', time_penalty=tp)
 		X_train = np.concatenate((X_twelve, X_eight))
 		Y_train = np.concatenate((Y_twelve, Y_eight))
-		#X_train = X_twelve
-		#Y_train = Y_twelve
 		X_sixteen, ___ = pre_processing(year=year, time_penalty=tp)
 		predictions = run_classifier(X_train, Y_train, X_sixteen, alpha=alpha)
 		print "Predictions on {0}".format(date.today())
@@ -40,16 +34,13 @@ def main():
 			results.append((name, (predictions[i]/sum(predictions))*100))
 		sorted_results = sorted(results, key=lambda x: x[1], reverse=True)
 		for i, (name, result) in enumerate(sorted_results):
-			print "		{0}: {1:.1f}".format(name, result)
+			print "		{0}: {1:.2f}".format(name, result)
 	else:
 		tp = 6.36636636637
-
 		X_twelve, Y_twelve = pre_processing(year='2012', time_penalty=tp)
 		X_eight, Y_eight = pre_processing(year='2008', time_penalty=tp)
 		X = np.concatenate((X_twelve, X_eight))
 		Y = np.concatenate((Y_twelve, Y_eight))
-		#X = X_twelve
-		#Y = Y_twelve
 		best_alpha = find_alpha(X, Y)
 		mse = run_test_classifier(X, Y, best_alpha)	
 
@@ -61,8 +52,6 @@ def optimize_time_penalty():
 		X_eight, Y_eight = pre_processing(year='2008', time_penalty=tp)
 		X = np.concatenate((X_twelve, X_eight))
 		Y = np.concatenate((Y_twelve, Y_eight))
-		#X = X_twelve
-		#Y = Y_twelve
 		best_alpha = 3.01101101101
 		coef, mse = run_test_classifier(X, Y, best_alpha)
 		all_mse.append(mse)
@@ -95,7 +84,10 @@ def run_classifier(X_train, Y_train, X_real, alpha):
 	clf = linear_model.Lasso(alpha=alpha, fit_intercept=False)
 	clf.fit(X_train, Y_train)
 	predictions = clf.predict(X_real)
-	
+	plot_classification(X_train, Y_train, X_real, predictions, clf.coef_)
+	return predictions
+
+def plot_classification(X_train, Y_train, X_real, predictions, coefficients):
 	tuples = [(X_train[:,1][i], Y_train[i][0]) for i in xrange(len(Y_train))]
 	sorted_tuples = sorted(tuples, key=lambda x: x[0], reverse=True)
 	training = plt.scatter(*zip(*sorted_tuples))
@@ -105,21 +97,15 @@ def run_classifier(X_train, Y_train, X_real, alpha):
 	axes = plt.gca()
 	axes.set_xlim([0, 40])
 	axes.set_ylim([0, 40])
-	coefficients = clf.coef_
 	x = range(0, 40)
 	y = [coefficients[1] * x_i for x_i in x]
 	plt.plot(x, y)
-
 	sixteen_tuples = [(X_real[:,1][i], predictions[i]) for i in xrange(len(X_real))]
 	sorted_sixteen_tuples = sorted(sixteen_tuples, key=lambda x: x[0], reverse=True)
 	real = plt.scatter(*zip(*sorted_sixteen_tuples), color='red')
-	
 	plt.legend([training, real], ['2008 and 2008 training', '2016 predictions'])
-
 	plt.show()
-
-
-	return predictions
+	print sorted_tuples
 
 
 def run_test_classifier(X, Y, alpha):
