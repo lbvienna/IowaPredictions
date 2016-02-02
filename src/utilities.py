@@ -42,13 +42,24 @@ def reshape_polling(polling_data, year):
 	for i, (key, value) in enumerate(polling_data.iteritems()):
 		if key in names:
 			floats_value = []
-			for i in value[2:]:
+			sum_ = 0.0
+			nums = 0.0
+			for j in value[2:]:
 				try:
-					float_i = float(i)
+					float_i = float(j)
+					sum_ += float_i
+					nums += 1
 				except ValueError as e:
-					float_i = 0.0
+					float_i = '---'
 				floats_value.append(float_i)
-			data[key] = floats_value
+			new_floats_value = []
+			for j in floats_value:
+				try:
+					float_i = float(j)
+				except ValueError as e:
+					float_i = sum_/float(nums)
+				new_floats_value.append(float_i)
+			data[key] = new_floats_value
 			if year == '2012' or year == '2008':
 				try:
 					election[key] = float(value[0])
